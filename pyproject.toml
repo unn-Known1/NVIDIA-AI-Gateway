@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nvidia-ai-gateway"
+version = "2.0.0"
+description = "Production-ready OpenAI-compatible proxy for NVIDIA AI with streaming, tool calls, CORS, and SQLite logging"
+authors = [{name = "NVIDIA AI Gateway Contributors"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
+]
+dependencies = [
+    "flask>=2.0.0",
+    "requests>=2.25.0",
+    "flask-cors>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+]
+
+[project.scripts]
+nvidia-ai-gateway = "gateway.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/your-username/NVIDIA-AI-Gateway"
+Repository = "https://github.com/your-username/NVIDIA-AI-Gateway.git"
+Issues = "https://github.com/your-username/NVIDIA-AI-Gateway/issues"
+Documentation = "https://github.com/your-username/NVIDIA-AI-Gateway/blob/main/README.md"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.db", "*.log", "*.ini", "*.cfg"]
