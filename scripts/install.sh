@@ -20,15 +20,45 @@ fi
 
 echo "✓ Python $PYTHON_VERSION detected"
 
-if [ ! -d "venv" ]; then
+if [ -d "venv" ]; then
+    echo "Virtual environment already exists. Skipping creation."
+else
     echo "Creating virtual environment..."
-    python3 -m venv venv
+
+    # Try creating venv with --without-pip first to avoid ensurepip issues
+    if python3 -m venv --without-pip venv 2>/dev/null; then
+        echo "✓ Virtual environment created (without pip)"
+    else
+        echo "Warning: venv creation with --without-pip failed, trying standard method..."
+        python3 -m venv venv || {
+            echo "ERROR: Failed to create virtual environment."
+            echo "Attempting fallback with virtualenv package..."
+
+            # Install virtualenv globally and use it
+            python3 -m pip install --user virtualenv || true
+            python3 -m virtualenv venv || {
+                echo "ERROR: All venv creation methods failed."
+                echo "Please install virtualenv manually: pip install virtualenv"
+                exit 1
+            }
+        }
+    fi
 fi
 
+# Activate venv
 source venv/bin/activate
 
+# Ensure pip is available
+if ! command -v pip &> /dev/null; then
+    echo "Installing pip in virtual environment..."
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python - || {
+        echo "ERROR: Failed to install pip."
+        exit 1
+    }
+fi
+
 echo "Installing dependencies..."
-pip install --upgrade pip
+pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
 echo ""
