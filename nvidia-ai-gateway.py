@@ -249,7 +249,19 @@ def _log_error(entry: dict, start_ts: float, status: int, msg: str):
 # Flask App
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configure CORS based on environment
+# In production, restrict to specific origins; in development, allow all
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if _cors_origins:
+    # Production: Use specific allowed origins
+    _allowed = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True}})
+    logger.info("CORS enabled for origins: %s", _allowed)
+else:
+    # Development: Allow all origins (with warning)
+    logger.warning("CORS set to allow all origins - this is insecure for production!")
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.after_request
 def after_request(response: Response) -> Response:
@@ -865,12 +877,17 @@ def main():
     ip = _local_ip()
     base = f"http://{ip}:{config['GATEWAY_PORT']}"
 
+    # Mask the API key for display - only show first 8 and last 4 characters
+    masked_key = config['GATEWAY_API_KEY']
+    if len(masked_key) > 12:
+        masked_key = masked_key[:8] + '...' + masked_key[-4:]
+
     BANNER = f"""
 ╔══════════════════════════════════════════════════════════════════╗
 ║          NVIDIA AI Gateway v2.0.0 (OpenAI-Compatible)          ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Gateway Base URL : {base}/v1
-║  Gateway API Key  : {config['GATEWAY_API_KEY']}
+║  Gateway API Key  : {masked_key} (hidden for security)
 ║  Target URL       : {config['CUSTOM_BASE_URL']}
 ║  Target Model     : {config['CUSTOM_MODEL_ID']}
 ║  DB               : {config['DB_PATH']}
