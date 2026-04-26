@@ -249,7 +249,19 @@ def _log_error(entry: dict, start_ts: float, status: int, msg: str):
 # Flask App
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configure CORS based on environment
+# In production, restrict to specific origins; in development, allow all
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if _cors_origins:
+    # Production: Use specific allowed origins
+    _allowed = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True}})
+    logger.info("CORS enabled for origins: %s", _allowed)
+else:
+    # Development: Allow all origins (with warning)
+    logger.warning("CORS set to allow all origins - this is insecure for production!")
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.after_request
 def after_request(response: Response) -> Response:
@@ -771,16 +783,28 @@ def get_logs():
     limit = request.args.get("limit", 50, type=int)
     offset = request.args.get("offset", 0, type=int)
     stream_only = request.args.get("stream", None)
-    where = ""
+    # Use parameterized queries to prevent SQL injection
     params: List = []
     if stream_only is not None:
-        where = "WHERE streaming = ?"
-        params.append(1 if stream_only.lower() in ("1", "true") else 0)
+        # Safely validate stream_only parameter
+        stream_value = 1 if stream_only.lower() in ("1", "true") else 0
+        where_clause = "WHERE streaming = ?"
+        params.append(stream_value)
+    else:
+        where_clause = ""
+
     with get_db() as conn:
-        total = conn.execute(f"SELECT COUNT(*) FROM api_logs {where}", params).fetchone()[0]
+        # Use parameterized query with separate params list
+        total = conn.execute(
+            "SELECT COUNT(*) FROM api_logs " + where_clause,
+            params
+        ).fetchone()[0]
+
+        # Append limit and offset to params for safe pagination
+        query_params = params + [limit, offset]
         rows = conn.execute(
-            f"SELECT * FROM api_logs {where} ORDER BY id DESC LIMIT ? OFFSET ?",
-            params + [limit, offset],
+            "SELECT * FROM api_logs " + where_clause + " ORDER BY id DESC LIMIT ? OFFSET ?",
+            query_params,
         ).fetchall()
     logs = []
     for row in rows:
@@ -853,12 +877,17 @@ def main():
     ip = _local_ip()
     base = f"http://{ip}:{config['GATEWAY_PORT']}"
 
+    # Mask the API key for display - only show first 8 and last 4 characters
+    masked_key = config['GATEWAY_API_KEY']
+    if len(masked_key) > 12:
+        masked_key = masked_key[:8] + '...' + masked_key[-4:]
+
     BANNER = f"""
 ╔══════════════════════════════════════════════════════════════════╗
 ║          NVIDIA AI Gateway v2.0.0 (OpenAI-Compatible)          ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Gateway Base URL : {base}/v1
-║  Gateway API Key  : {config['GATEWAY_API_KEY']}
+║  Gateway API Key  : {masked_key} (hidden for security)
 ║  Target URL       : {config['CUSTOM_BASE_URL']}
 ║  Target Model     : {config['CUSTOM_MODEL_ID']}
 ║  DB               : {config['DB_PATH']}
