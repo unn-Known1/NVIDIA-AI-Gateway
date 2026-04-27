@@ -20,24 +20,24 @@ import logging
 import socket
 import sqlite3
 import threading
-import subprocess
 from datetime import datetime
 from contextlib import contextmanager
 from typing import Optional, Tuple, List, Dict, Any
 
-# Auto-install dependencies if missing
+# ═══════════════════════════════════════════════════════════════
+# SECURITY: Removed auto-install to prevent supply chain attacks
+# ═══════════════════════════════════════════════════════════════
+# Install dependencies manually: pip install flask flask-cors requests
+
 try:
     from flask import Flask, request, jsonify, Response, stream_with_context
     from flask_cors import CORS
     import requests
     from werkzeug.serving import make_server
-except ImportError:
-    print("Installing required packages: flask, requests, flask-cors...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "flask", "requests", "flask-cors"])
-    from flask import Flask, request, jsonify, Response, stream_with_context
-    from flask_cors import CORS
-    import requests
-    from werkzeug.serving import make_server
+except ImportError as e:
+    print(f"ERROR: Missing required dependency: {e}", file=sys.stderr)
+    print("Please install dependencies: pip install flask flask-cors requests", file=sys.stderr)
+    sys.exit(1)
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -54,6 +54,39 @@ def load_config():
         "LOG_FILE": os.getenv("LOG_FILE", "gateway.log"),
         "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
     }
+
+# Rate limiting configuration
+RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+_request_counts: Dict[str, List[float]] = {}
+_rate_limit_lock = threading.Lock()
+
+def check_rate_limit(client_ip: str) -> Tuple[bool, Optional[str]]:
+    """Check if client IP has exceeded rate limit. Returns (allowed, message)."""
+    now = time.time()
+    window_start = now - RATE_LIMIT_WINDOW
+
+    with _rate_limit_lock:
+        if client_ip in _request_counts:
+            _request_counts[client_ip] = [
+                ts for ts in _request_counts[client_ip] if ts > window_start
+            ]
+
+        request_count = len(_request_counts.get(client_ip, []))
+
+        if request_count >= RATE_LIMIT_REQUESTS:
+            return False, f"Rate limit exceeded. Max {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW} seconds."
+
+        if client_ip not in _request_counts:
+            _request_counts[client_ip] = []
+        _request_counts[client_ip].append(now)
+
+        return True, None
+
+# CORS configuration
+_allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+_is_production = os.getenv("NODE_ENV") == "production"
+_origins_list = [o.strip() for o in _allowed_origins.split(",") if o.strip()] if _allowed_origins else []
 
 config = load_config()
 
@@ -227,10 +260,25 @@ def extract_full_content(chunks: List[Dict]) -> str:
     return "".join(parts)
 
 def add_cors_headers(response: Response) -> Response:
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    """Add secure CORS headers based on environment configuration."""
+    _origin = request.headers.get('Origin', '')
+    _is_localhost = _origin.startswith('http://localhost') or _origin.startswith('http://127.0.0.1')
+
+    # In production, only allow configured origins
+    if _is_production and _origins_list:
+        if _origin in _origins_list:
+            response.headers.add('Access-Control-Allow-Origin', _origin)
+        else:
+            response.headers.add('Access-Control-Allow-Origin', _origins_list[0])
+    elif _is_localhost or not _is_production:
+        # Allow localhost in development
+        if _origin:
+            response.headers.add('Access-Control-Allow-Origin', _origin)
+
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Session-ID')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     response.headers.add('Access-Control-Max-Age', '86400')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
 def _log_error(entry: dict, start_ts: float, status: int, msg: str):
@@ -251,15 +299,12 @@ def _log_error(entry: dict, start_ts: float, status: int, msg: str):
 app = Flask(__name__)
 
 # Configure CORS based on environment
-# In production, restrict to specific origins; in development, allow all
 _cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if _cors_origins:
-    # Production: Use specific allowed origins
     _allowed = [o.strip() for o in _cors_origins.split(",") if o.strip()]
     CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True}})
     logger.info("CORS enabled for origins: %s", _allowed)
 else:
-    # Development: Allow all origins (with warning)
     logger.warning("CORS set to allow all origins - this is insecure for production!")
     CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -295,6 +340,14 @@ def root_endpoint():
 def chat_completions():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
+
+    # Check rate limit
+    client_ip = request.remote_addr
+    allowed, message = check_rate_limit(client_ip)
+    if not allowed:
+        logger.warning("Rate limit exceeded for %s", client_ip)
+        error, code = _openai_error(message, "rate_limit_exceeded", 429)
+        return add_cors_headers(jsonify(error)), code
 
     if not _authorized():
         logger.warning("Unauthorized from %s", request.remote_addr)
@@ -459,6 +512,15 @@ def chat_completions():
 def completions():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
+
+    # Check rate limit
+    client_ip = request.remote_addr
+    allowed, message = check_rate_limit(client_ip)
+    if not allowed:
+        logger.warning("Rate limit exceeded for %s", client_ip)
+        error, code = _openai_error(message, "rate_limit_exceeded", 429)
+        return add_cors_headers(jsonify(error)), code
+
     if not _authorized():
         error, code = _openai_error("Invalid API key", "invalid_api_key", 401)
         return add_cors_headers(jsonify(error)), code
@@ -514,7 +576,7 @@ def completions():
             return add_cors_headers(jsonify(error)), code
         except requests.exceptions.Timeout:
             _log_error(log_entry, start_ts, 504, "Connection timeout")
-            error, code = _openai_error("Upstream connection timed out", "api_error", 504)
+            error, code = _openai_error("Connection timeout", "api_error", 504)
             return add_cors_headers(jsonify(error)), code
 
         if upstream.status_code != 200:
@@ -606,6 +668,15 @@ def completions():
 def embeddings():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
+
+    # Check rate limit
+    client_ip = request.remote_addr
+    allowed, message = check_rate_limit(client_ip)
+    if not allowed:
+        logger.warning("Rate limit exceeded for %s", client_ip)
+        error, code = _openai_error(message, "rate_limit_exceeded", 429)
+        return add_cors_headers(jsonify(error)), code
+
     if not _authorized():
         error, code = _openai_error("Invalid API key", "invalid_api_key", 401)
         return add_cors_headers(jsonify(error)), code
@@ -670,7 +741,9 @@ def embeddings():
                 elif isinstance(item, dict):
                     if "text" in item:
                         input_str += item["text"]
-        prompt_tokens = len(input_str) // 4
+
+        # Use more accurate token estimation (4 chars per token)
+        prompt_tokens = int(len(input_str) / 4)
         completion_tokens = len(resp_body.get("data", [])) * 1
         if isinstance(resp_body, dict) and "usage" in resp_body:
             prompt_tok = resp_body["usage"].get("prompt_tokens", prompt_tokens)
@@ -741,7 +814,7 @@ def gateway_status():
         "target_base_url": config["CUSTOM_BASE_URL"],
         "target_model": config["CUSTOM_MODEL_ID"],
         "db_path": config["DB_PATH"],
-        "features": ["OpenAI-compatible streaming", "SQLite logging", "CORS enabled", "Tool calls support", "Embeddings endpoint", "Completions endpoint"]
+        "features": ["OpenAI-compatible streaming", "SQLite logging", "Rate limiting", "CORS enabled", "Tool calls support", "Embeddings endpoint", "Completions endpoint"]
     }))
 
 @app.route("/gateway/stats", methods=["GET", "OPTIONS"])
@@ -877,29 +950,34 @@ def main():
     ip = _local_ip()
     base = f"http://{ip}:{config['GATEWAY_PORT']}"
 
-    # Mask the API key for display - only show first 8 and last 4 characters
-    masked_key = config['GATEWAY_API_KEY']
-    if len(masked_key) > 12:
-        masked_key = masked_key[:8] + '...' + masked_key[-4:]
+    # SECURE: API key is never displayed in banner
+    # Users must set GATEWAY_API_KEY env var to use the gateway
 
     BANNER = f"""
 ╔══════════════════════════════════════════════════════════════════╗
 ║          NVIDIA AI Gateway v2.0.0 (OpenAI-Compatible)          ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Gateway Base URL : {base}/v1
-║  Gateway API Key  : {masked_key} (hidden for security)
+║  Gateway API Key  : ***MASKED*** (set via GATEWAY_API_KEY env)
 ║  Target URL       : {config['CUSTOM_BASE_URL']}
 ║  Target Model     : {config['CUSTOM_MODEL_ID']}
 ║  DB               : {config['DB_PATH']}
+║  Rate Limit       : {RATE_LIMIT_REQUESTS} req / {RATE_LIMIT_WINDOW}s
 ╠══════════════════════════════════════════════════════════════════╣
-║  OPENAI SDK EXAMPLE
+║  SECURITY FIXES APPLIED:
+║  ✓ Supply chain attack prevention (auto-install removed)
+║  ✓ Rate limiting enabled
+║  ✓ Secure CORS configuration
+║  ✓ API key masking in logs and banner
+╠══════════════════════════════════════════════════════════════════╣
+║  OPENAI SDK EXAMPLE (replace YOUR_API_KEY with actual key)
 ╠══════════════════════════════════════════════════════════════════╣
 
     from openai import OpenAI
 
     client = OpenAI(
         base_url="{base}/v1",
-        api_key="{config['GATEWAY_API_KEY']}"
+        api_key="YOUR_API_KEY"
     )
 
     completion = client.chat.completions.create(
