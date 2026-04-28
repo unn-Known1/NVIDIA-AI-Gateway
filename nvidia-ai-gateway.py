@@ -322,6 +322,8 @@ def health_check():
     uptime = time.time() - START_TIME
     return jsonify({
         "status": "ok",
+        "service": "nvidia-ai-gateway",
+        "version": "2.0.0",
         "uptime_seconds": round(uptime, 2),
         "timestamp": time.time()
     })
