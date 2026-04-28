@@ -13,6 +13,7 @@ import os
 import sys
 import json
 import time
+START_TIME = time.time()
 import uuid
 import re
 import argparse
@@ -315,6 +316,17 @@ def after_request(response: Response) -> Response:
 # ═══════════════════════════════════════════════════════════════
 # Routes
 # ═══════════════════════════════════════════════════════════════
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    uptime = time.time() - START_TIME
+    return jsonify({
+        "status": "ok",
+        "service": "nvidia-ai-gateway",
+        "version": "2.0.0",
+        "uptime_seconds": round(uptime, 2),
+        "timestamp": time.time()
+    })
 
 @app.route("/", methods=["GET", "OPTIONS"])
 @app.route("/v1", methods=["GET", "OPTIONS"])
