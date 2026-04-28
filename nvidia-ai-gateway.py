@@ -33,11 +33,13 @@ from typing import Optional, Tuple, List, Dict, Any
 try:
     from flask import Flask, request, jsonify, Response, stream_with_context
     from flask_cors import CORS
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
     import requests
     from werkzeug.serving import make_server
 except ImportError as e:
     print(f"ERROR: Missing required dependency: {e}", file=sys.stderr)
-    print("Please install dependencies: pip install flask flask-cors requests", file=sys.stderr)
+    print("Please install dependencies: pip install flask flask-cors flask-limiter requests", file=sys.stderr)
     sys.exit(1)
 
 # ═══════════════════════════════════════════════════════════════
@@ -73,6 +75,10 @@ def load_config():
         "DB_PATH": os.getenv("DB_PATH", "gateway_requests.db"),
         "LOG_FILE": os.getenv("LOG_FILE", "gateway.log"),
         "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+        "RATE_LIMIT_ENABLED": os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true",
+        "RATE_LIMIT_DEFAULT": os.getenv("RATE_LIMIT_DEFAULT", "100 per minute"),
+        "RATE_LIMIT_CHAT": os.getenv("RATE_LIMIT_CHAT", "60 per minute"),
+        "RATE_LIMIT_EMBEDDINGS": os.getenv("RATE_LIMIT_EMBEDDINGS", "120 per minute"),
     }
 
 # Rate limiting configuration
@@ -318,6 +324,26 @@ def _log_error(entry: dict, start_ts: float, status: int, msg: str):
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
 
+# Configure rate limiting
+if config["RATE_LIMIT_ENABLED"]:
+    limiter = Limiter(
+        app,
+        key_func=get_remote_address,
+        default_limits=[config["RATE_LIMIT_DEFAULT"]],
+        storage_uri="memory://",
+    )
+    logger.info("Rate limiting enabled: %s", config["RATE_LIMIT_DEFAULT"])
+else:
+    # Create a no-op limiter when disabled
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["99999999 per minute"],
+    )
+    limiter.init_app(app)
+    logger.warning("Rate limiting DISABLED - this is insecure for production!")
+
 # Configure CORS based on environment
 _cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
 _is_production = os.getenv("NODE_ENV") == "production"
@@ -379,6 +405,7 @@ def root_endpoint():
 
 @app.route("/v1/chat/completions", methods=["POST", "OPTIONS"])
 @app.route("/chat/completions", methods=["POST", "OPTIONS"])
+@limiter.limit(config["RATE_LIMIT_CHAT"])
 def chat_completions():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
@@ -551,6 +578,7 @@ def chat_completions():
 
 @app.route("/v1/completions", methods=["POST", "OPTIONS"])
 @app.route("/completions", methods=["POST", "OPTIONS"])
+@limiter.limit(config["RATE_LIMIT_CHAT"])
 def completions():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
@@ -707,6 +735,7 @@ def completions():
 
 @app.route("/v1/embeddings", methods=["POST", "OPTIONS"])
 @app.route("/embeddings", methods=["POST", "OPTIONS"])
+@limiter.limit(config["RATE_LIMIT_EMBEDDINGS"])
 def embeddings():
     if request.method == "OPTIONS":
         return add_cors_headers(Response("", 200))
