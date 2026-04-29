@@ -74,3 +74,11 @@
 2026-04-28 22:08:42,680  INFO      SQLite DB ready at gateway_requests.db
 2026-04-28 22:08:42,701  INFO      Gateway running on port 8089 — press Ctrl+C to stop
 2026-04-28 22:08:51,139  INFO      127.0.0.1 - - [28/Apr/2026 22:08:51] "GET /health HTTP/1.1" 200 -
+2026-04-29 18:57:07,777  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-04-29 18:57:07,789  INFO      SQLite DB ready at gateway_requests.db
+2026-04-29 18:57:07,831  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-04-29 18:57:20,955  INFO      127.0.0.1 - - [29/Apr/2026 18:57:20] "GET /health HTTP/1.1" 200 -
+2026-04-29 19:00:12,225  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-04-29 19:00:12,230  INFO      SQLite DB ready at gateway_requests.db
+2026-04-29 19:00:12,249  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-04-29 19:00:19,059  INFO      127.0.0.1 - - [29/Apr/2026 19:00:19] "GET /health HTTP/1.1" 200 -

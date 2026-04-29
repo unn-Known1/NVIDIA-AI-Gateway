@@ -320,6 +320,11 @@ def after_request(response: Response) -> Response:
 # ═══════════════════════════════════════════════════════════════
 # Routes
 # ═══════════════════════════════════════════════════════════════
+def format_uptime(seconds):
+    mins, sec = divmod(int(seconds), 60)
+    hrs, mins = divmod(mins, 60)
+    return f"{hrs}h {mins}m {sec}s"
+
 @app.route("/health", methods=["GET"])
 def health_check():
     try:
@@ -329,6 +334,7 @@ def health_check():
             "service": SERVICE_NAME,
             "version": APP_VERSION,
             "uptime_seconds": round(uptime, 2),
+            "uptime_human": format_uptime(uptime),
             "timestamp": time.time()
         })
     except Exception as e:
