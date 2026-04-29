@@ -18,6 +18,10 @@ import uuid
 import re
 import argparse
 import logging
+
+APP_VERSION = "2.0.0"
+SERVICE_NAME = "nvidia-ai-gateway"
+
 import socket
 import sqlite3
 import threading
@@ -321,7 +325,6 @@ def readiness_check():
     return jsonify({
         "status": "ready"
     })
-    
 @app.route("/health", methods=["GET"])
 def health_check():
     uptime = time.time() - START_TIME
