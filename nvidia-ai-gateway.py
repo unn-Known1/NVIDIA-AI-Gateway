@@ -316,7 +316,12 @@ def after_request(response: Response) -> Response:
 # ═══════════════════════════════════════════════════════════════
 # Routes
 # ═══════════════════════════════════════════════════════════════
-
+@app.route("/ready", methods=["GET"])
+def readiness_check():
+    return jsonify({
+        "status": "ready"
+    })
+    
 @app.route("/health", methods=["GET"])
 def health_check():
     uptime = time.time() - START_TIME
