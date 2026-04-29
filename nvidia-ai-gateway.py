@@ -320,21 +320,22 @@ def after_request(response: Response) -> Response:
 # ═══════════════════════════════════════════════════════════════
 # Routes
 # ═══════════════════════════════════════════════════════════════
-@app.route("/ready", methods=["GET"])
-def readiness_check():
-    return jsonify({
-        "status": "ready"
-    })
 @app.route("/health", methods=["GET"])
 def health_check():
-    uptime = time.time() - START_TIME
-    return jsonify({
-        "status": "ok",
-        "service": "nvidia-ai-gateway",
-        "version": "2.0.0",
-        "uptime_seconds": round(uptime, 2),
-        "timestamp": time.time()
-    })
+    try:
+        uptime = time.time() - START_TIME
+        return jsonify({
+            "status": "ok",
+            "service": SERVICE_NAME,
+            "version": APP_VERSION,
+            "uptime_seconds": round(uptime, 2),
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @app.route("/", methods=["GET", "OPTIONS"])
 @app.route("/v1", methods=["GET", "OPTIONS"])
