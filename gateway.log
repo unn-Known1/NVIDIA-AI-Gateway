@@ -1,0 +1,3 @@
+2026-05-01 00:01:21,963  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-05-01 00:01:21,984  INFO      SQLite DB ready at gateway_requests.db
+2026-05-01 00:01:22,028  INFO      Gateway running on port 8089 — press Ctrl+C to stop

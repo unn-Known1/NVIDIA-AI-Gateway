@@ -324,8 +324,10 @@ def root_endpoint():
         return add_cors_headers(resp)
     return jsonify({
         "object": "api",
+        "service": "nvidia-ai-gateway",  
         "message": "NVIDIA AI Gateway - OpenAI Compatible",
         "version": "2.0.0",
+        "timestamp": time.time(),
         "endpoints": {
             "chat": "/v1/chat/completions",
             "completions": "/v1/completions",
