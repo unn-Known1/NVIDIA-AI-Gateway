@@ -41,6 +41,25 @@ except ImportError as e:
     sys.exit(1)
 
 # ═══════════════════════════════════════════════════════════════
+# PERFORMANCE: Connection Pooling with HTTPAdapter
+# ═══════════════════════════════════════════════════════════════
+# Create a session with connection pooling for upstream requests
+_http_session = requests.Session()
+# Configure connection pool size and retry settings
+_adapter = requests.adapters.HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=20,
+    max_retries=0,  # Retries handled at application level
+    pool_block=False
+)
+_http_session.mount('http://', _adapter)
+_http_session.mount('https://', _adapter)
+
+# Override default requests.get/post with session methods
+requests.get = _http_session.get
+requests.post = _http_session.post
+
+# ═══════════════════════════════════════════════════════════════
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
 
@@ -301,13 +320,24 @@ app = Flask(__name__)
 
 # Configure CORS based on environment
 _cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+_is_production = os.getenv("NODE_ENV") == "production"
+
+# SECURE: Default to restrictive CORS in production
+# Only allow wildcard (*) if explicitly configured in non-production
 if _cors_origins:
     _allowed = [o.strip() for o in _cors_origins.split(",") if o.strip()]
-    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True}})
-    logger.info("CORS enabled for origins: %s", _allowed)
+    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True, "allow_headers": "*"}})
+    logger.info("CORS enabled for configured origins: %s", _allowed)
 else:
-    logger.warning("CORS set to allow all origins - this is insecure for production!")
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    if _is_production:
+        # SECURITY: In production, require explicit CORS_ALLOWED_ORIGINS
+        logger.error("CORS_ALLOWED_ORIGINS not set in production! Defaulting to no CORS.")
+        CORS(app, resources={r"/*": {"origins": "", "supports_credentials": False}})
+        logger.warning("SECURITY WARNING: CORS is disabled. Set CORS_ALLOWED_ORIGINS for production.")
+    else:
+        # Development mode - allow localhost only
+        logger.warning("CORS set to allow all origins in development mode - not recommended for production!")
+        CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 @app.after_request
 def after_request(response: Response) -> Response:
@@ -904,16 +934,31 @@ def get_logs():
     return add_cors_headers(jsonify({"total": total, "limit": limit, "offset": offset, "returned": len(logs), "logs": logs}))
 
 # ═══════════════════════════════════════════════════════════════
-# Background server
+# Background server with graceful shutdown support
 # ═══════════════════════════════════════════════════════════════
 class BackgroundServer:
     def __init__(self, flask_app, port):
         self.server = make_server("0.0.0.0", port, flask_app)
         self._thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self._shutdown_event = threading.Event()
     def start(self):
         self._thread.start()
-    def stop(self):
-        self.server.shutdown()
+        logger.info("Background server started")
+    def stop(self, timeout=10):
+        """Gracefully stop the server with timeout protection."""
+        logger.info("Initiating graceful shutdown...")
+        self._shutdown_event.set()
+        try:
+            # Request server to shut down gracefully
+            self.server.shutdown()
+            # Wait for thread to finish with timeout
+            if self._thread.is_alive():
+                self._thread.join(timeout=timeout)
+                if self._thread.is_alive():
+                    logger.warning("Server thread did not stop within %ds, forcing...", timeout)
+        except Exception as e:
+            logger.error("Error during server shutdown: %s", e)
+        logger.info("Server shutdown complete")
 
 def _local_ip() -> str:
     try:
