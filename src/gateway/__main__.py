@@ -47,6 +47,8 @@ def load_config():
         "DB_PATH": os.getenv("DB_PATH", "gateway_requests.db"),
         "LOG_FILE": os.getenv("LOG_FILE", "gateway.log"),
         "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO"),
+        "UPSTREAM_CONNECT_TIMEOUT": int(os.getenv("UPSTREAM_CONNECT_TIMEOUT", "10")),
+        "UPSTREAM_READ_TIMEOUT": int(os.getenv("UPSTREAM_READ_TIMEOUT", "300")),
     }
 
 config = load_config()
@@ -393,7 +395,7 @@ def chat_completions():
                 json=req_body,
                 headers=headers,
                 stream=True,
-                timeout=(10, 300),
+                timeout=(config["UPSTREAM_CONNECT_TIMEOUT"], config["UPSTREAM_READ_TIMEOUT"]),
             )
         except requests.exceptions.ConnectionError as e:
             _log_error(log_entry, start_ts, 502, str(e))
@@ -477,7 +479,7 @@ def chat_completions():
     try:
         resp = requests.post(
             target_url, json=req_body, headers=headers,
-            timeout=(10, 300),
+            timeout=(config["UPSTREAM_CONNECT_TIMEOUT"], config["UPSTREAM_READ_TIMEOUT"]),
         )
         duration_ms = (time.time() - start_ts) * 1000
 
@@ -582,7 +584,7 @@ def completions():
         collected_chunks = []
 
         try:
-            upstream = requests.post(target_url, json=req_body, headers=headers, stream=True, timeout=(10, 300))
+            upstream = requests.post(target_url, json=req_body, headers=headers, stream=True, timeout=(config["UPSTREAM_CONNECT_TIMEOUT"], config["UPSTREAM_READ_TIMEOUT"]))
         except requests.exceptions.ConnectionError as e:
             _log_error(log_entry, start_ts, 502, str(e))
             error, code = _openai_error(f"Cannot reach upstream: {e}", "api_error", 502)
@@ -650,7 +652,7 @@ def completions():
         })
     else:
         try:
-            resp = requests.post(target_url, json=req_body, headers=headers, timeout=(10, 300))
+            resp = requests.post(target_url, json=req_body, headers=headers, timeout=(config["UPSTREAM_CONNECT_TIMEOUT"], config["UPSTREAM_READ_TIMEOUT"]))
             duration_ms = (time.time() - start_ts) * 1000
             try:
                 resp_body = resp.json()
@@ -737,7 +739,7 @@ def embeddings():
     }
 
     try:
-        resp = requests.post(target_url, json=req_body, headers=headers, timeout=(10, 300))
+        resp = requests.post(target_url, json=req_body, headers=headers, timeout=(config["UPSTREAM_CONNECT_TIMEOUT"], config["UPSTREAM_READ_TIMEOUT"]))
         duration_ms = (time.time() - start_ts) * 1000
 
         try:
