@@ -1,0 +1,6 @@
+.git
+scripts/
+*.md
+pyinstaller.spec
+.dockerignore
+LICENSE
