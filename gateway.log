@@ -1,3 +1,33 @@
 2026-05-01 00:01:21,963  WARNING   CORS set to allow all origins - this is insecure for production!
 2026-05-01 00:01:21,984  INFO      SQLite DB ready at gateway_requests.db
 2026-05-01 00:01:22,028  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 00:01:28,730  INFO      127.0.0.1 - - [01/May/2026 00:01:28] "GET / HTTP/1.1" 200 -
+2026-05-01 00:01:28,977  INFO      127.0.0.1 - - [01/May/2026 00:01:28] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-05-01 14:58:33,414  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-05-01 14:58:33,430  INFO      SQLite DB ready at gateway_requests.db
+2026-05-01 14:58:33,481  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 14:58:49,942  ERROR     Exception on / [GET]
+Traceback (most recent call last):
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\GANESH\NVIDIA-AI-Gateway\nvidia-ai-gateway.py", line 328, in root_endpoint
+    "service": SERVICE_NAME,  # use constant instead of hardcoding
+               ^^^^^^^^^^^^
+NameError: name 'SERVICE_NAME' is not defined
+2026-05-01 14:58:49,974  INFO      127.0.0.1 - - [01/May/2026 14:58:49] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2026-05-01 14:59:33,483  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:00:33,485  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:01:05,466  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-05-01 15:01:05,471  INFO      SQLite DB ready at gateway_requests.db
+2026-05-01 15:01:05,488  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 15:01:09,909  INFO      127.0.0.1 - - [01/May/2026 15:01:09] "GET / HTTP/1.1" 200 -

@@ -322,20 +322,26 @@ def root_endpoint():
     if request.method == "OPTIONS":
         resp = Response("", 200)
         return add_cors_headers(resp)
+
     return jsonify({
         "object": "api",
-        "service": "nvidia-ai-gateway",  
+        "service": "nvidia-ai-gateway",  # use constant instead of hardcoding
         "message": "NVIDIA AI Gateway - OpenAI Compatible",
-        "version": "2.0.0",
+        "version": "2.0.0",   # use constant
+        "status": "running",      # 👈 NEW FIELD (improvement)
         "timestamp": time.time(),
         "endpoints": {
             "chat": "/v1/chat/completions",
             "completions": "/v1/completions",
             "embeddings": "/v1/embeddings",
             "models": "/v1/models",
-            "gateway": {"status": "/gateway/status", "stats": "/gateway/stats", "logs": "/gateway/logs"}
+            "gateway": {
+                "status": "/gateway/status",
+                "stats": "/gateway/stats",
+                "logs": "/gateway/logs"
+            }
         }
-    })
+    }), 200
 
 @app.route("/v1/chat/completions", methods=["POST", "OPTIONS"])
 @app.route("/chat/completions", methods=["POST", "OPTIONS"])
