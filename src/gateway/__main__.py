@@ -103,6 +103,9 @@ def init_db():
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON api_logs(timestamp)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_request_id ON api_logs(request_id)")
+        current_version = conn.execute("PRAGMA user_version").fetchone()[0]
+        if current_version < 1:
+            conn.execute("PRAGMA user_version = 1")
         conn.commit()
 
 @contextmanager
@@ -997,13 +1000,16 @@ def main():
     # Initialize DB
     init_db()
     logger.info("SQLite DB ready at %s", config["DB_PATH"])
+    
+    
+    
 
     ip = _local_ip()
     base = f"http://{ip}:{config['GATEWAY_PORT']}"
 
     BANNER = f"""
 ╔══════════════════════════════════════════════════════════════════╗
-║          NVIDIA AI Gateway v{__version__} (OpenAI-Compatible)          ║
+║          NVIDIA AI Gateway version  (OpenAI-Compatible)          ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Gateway Base URL : {base}/v1
 ║  Gateway API Key  : {config['GATEWAY_API_KEY']}
