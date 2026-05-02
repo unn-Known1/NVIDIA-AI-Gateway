@@ -1,3 +1,204 @@
 2026-05-01 00:01:21,963  WARNING   CORS set to allow all origins - this is insecure for production!
 2026-05-01 00:01:21,984  INFO      SQLite DB ready at gateway_requests.db
 2026-05-01 00:01:22,028  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 00:01:28,730  INFO      127.0.0.1 - - [01/May/2026 00:01:28] "GET / HTTP/1.1" 200 -
+2026-05-01 00:01:28,977  INFO      127.0.0.1 - - [01/May/2026 00:01:28] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-05-01 14:58:33,414  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-05-01 14:58:33,430  INFO      SQLite DB ready at gateway_requests.db
+2026-05-01 14:58:33,481  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 14:58:49,942  ERROR     Exception on / [GET]
+Traceback (most recent call last):
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\GANESH\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\GANESH\NVIDIA-AI-Gateway\nvidia-ai-gateway.py", line 328, in root_endpoint
+    "service": SERVICE_NAME,  # use constant instead of hardcoding
+               ^^^^^^^^^^^^
+NameError: name 'SERVICE_NAME' is not defined
+2026-05-01 14:58:49,974  INFO      127.0.0.1 - - [01/May/2026 14:58:49] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2026-05-01 14:59:33,483  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:00:33,485  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:01:05,466  WARNING   CORS set to allow all origins - this is insecure for production!
+2026-05-01 15:01:05,471  INFO      SQLite DB ready at gateway_requests.db
+2026-05-01 15:01:05,488  INFO      Gateway running on port 8089 — press Ctrl+C to stop
+2026-05-01 15:01:09,909  INFO      127.0.0.1 - - [01/May/2026 15:01:09] "GET / HTTP/1.1" 200 -
+2026-05-01 15:02:05,489  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:03:05,491  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:04:05,493  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:05:05,495  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:06:05,498  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:07:05,500  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:08:05,502  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:09:05,503  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:10:05,506  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:11:05,508  INFO      Heartbeat — total logged requests: 0
+2026-05-01 15:12:05,512  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:34:45,164  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:35:45,247  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:36:45,249  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:37:45,253  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:38:45,258  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:39:45,260  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:40:45,263  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:41:45,266  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:42:45,271  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:43:45,276  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:44:45,279  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:45:45,281  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:46:45,284  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:47:45,288  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:48:45,291  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:49:45,294  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:50:45,297  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:51:45,300  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:52:45,303  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:53:45,306  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:54:45,308  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:55:45,310  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:56:45,314  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:57:45,332  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:58:45,390  INFO      Heartbeat — total logged requests: 0
+2026-05-01 16:59:45,448  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:00:45,488  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:01:45,491  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:02:45,494  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:03:45,496  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:04:45,500  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:05:45,504  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:06:45,512  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:07:45,515  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:08:45,521  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:09:45,524  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:10:45,531  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:11:45,534  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:12:45,537  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:13:45,541  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:14:45,546  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:15:45,551  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:16:45,554  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:17:45,561  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:18:45,564  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:19:45,569  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:20:45,575  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:21:45,579  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:22:45,583  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:23:45,585  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:24:45,590  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:25:45,595  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:26:45,597  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:27:45,602  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:28:45,607  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:29:45,611  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:30:45,615  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:31:45,617  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:32:45,620  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:33:45,627  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:34:45,632  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:35:45,637  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:36:45,642  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:37:45,647  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:38:45,651  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:39:45,655  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:40:45,658  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:41:45,661  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:42:45,665  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:43:45,667  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:44:45,670  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:45:45,674  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:46:45,677  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:47:45,681  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:48:45,684  INFO      Heartbeat — total logged requests: 0
+2026-05-01 17:49:45,687  INFO      Heartbeat — total logged requests: 0
+2026-05-01 19:00:17,740  INFO      Heartbeat — total logged requests: 0
+2026-05-01 19:01:17,755  INFO      Heartbeat — total logged requests: 0
+2026-05-01 20:34:44,969  INFO      Heartbeat — total logged requests: 0
+2026-05-01 20:35:44,973  INFO      Heartbeat — total logged requests: 0
+2026-05-01 20:36:44,975  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:19:45,045  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:20:45,127  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:21:45,131  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:22:45,135  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:23:45,138  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:24:45,143  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:25:45,147  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:26:45,150  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:27:45,155  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:28:45,158  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:29:45,161  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:30:45,164  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:31:45,170  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:32:45,173  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:33:45,176  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:34:45,181  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:35:45,186  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:36:45,191  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:37:44,180  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:38:44,184  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:39:44,186  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:40:44,190  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:41:44,195  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:42:44,200  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:43:44,203  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:44:44,210  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:45:44,216  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:46:44,219  INFO      Heartbeat — total logged requests: 0
+2026-05-02 00:54:28,586  INFO      Heartbeat — total logged requests: 0
+2026-05-02 10:26:27,176  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:22:58,172  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:23:58,175  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:24:58,178  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:25:58,182  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:26:58,185  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:27:58,187  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:28:58,190  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:29:58,194  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:30:58,219  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:31:58,228  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:32:58,263  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:33:58,267  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:34:58,271  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:35:58,277  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:36:58,280  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:37:58,282  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:38:58,287  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:39:58,312  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:40:58,324  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:41:58,327  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:42:58,332  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:43:58,337  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:44:58,341  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:45:58,344  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:46:58,355  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:47:58,448  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:48:58,460  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:49:58,468  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:50:58,479  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:51:58,484  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:52:58,487  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:53:58,490  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:54:58,494  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:55:58,497  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:56:58,501  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:57:58,505  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:58:58,507  INFO      Heartbeat — total logged requests: 0
+2026-05-02 13:59:58,511  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:00:58,514  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:01:58,518  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:02:58,521  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:03:58,527  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:04:58,530  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:05:58,534  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:06:58,536  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:07:58,541  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:08:58,544  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:09:58,546  INFO      Heartbeat — total logged requests: 0
+2026-05-02 14:10:58,551  INFO      Heartbeat — total logged requests: 0
