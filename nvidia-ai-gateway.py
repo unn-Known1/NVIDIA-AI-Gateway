@@ -18,6 +18,10 @@ import uuid
 import re
 import argparse
 import logging
+
+APP_VERSION = "2.0.0"
+SERVICE_NAME = "nvidia-ai-gateway"
+
 import socket
 import sqlite3
 import threading
@@ -346,6 +350,28 @@ def after_request(response: Response) -> Response:
 # ═══════════════════════════════════════════════════════════════
 # Routes
 # ═══════════════════════════════════════════════════════════════
+def format_uptime(seconds):
+    mins, sec = divmod(int(seconds), 60)
+    hrs, mins = divmod(mins, 60)
+    return f"{hrs}h {mins}m {sec}s"
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    try:
+        uptime = time.time() - START_TIME
+        return jsonify({
+            "status": "ok",
+            "service": SERVICE_NAME,
+            "version": APP_VERSION,
+            "uptime_seconds": round(uptime, 2),
+            "uptime_human": format_uptime(uptime),
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @app.route("/health", methods=["GET"])
 def health_check():
