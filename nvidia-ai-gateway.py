@@ -39,10 +39,20 @@ try:
     from flask_cors import CORS
     import requests
     from werkzeug.serving import make_server
+    from pydantic import BaseModel, ValidationError
 except ImportError as e:
     print(f"ERROR: Missing required dependency: {e}", file=sys.stderr)
-    print("Please install dependencies: pip install flask flask-cors requests", file=sys.stderr)
+    print("Please install dependencies: pip install flask flask-cors requests pydantic", file=sys.stderr)
     sys.exit(1)
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[Message]
+    model: str = "default"
+    stream: bool = False
 
 # ═══════════════════════════════════════════════════════════════
 # PERFORMANCE: Connection Pooling with HTTPAdapter
@@ -373,17 +383,6 @@ def health_check():
             "message": str(e)
         }), 500
 
-@app.route("/health", methods=["GET"])
-def health_check():
-    uptime = time.time() - START_TIME
-    return jsonify({
-        "status": "ok",
-        "service": "nvidia-ai-gateway",
-        "version": "2.0.0",
-        "uptime_seconds": round(uptime, 2),
-        "timestamp": time.time()
-    })
-
 @app.route("/", methods=["GET", "OPTIONS"])
 @app.route("/v1", methods=["GET", "OPTIONS"])
 def root_endpoint():
@@ -433,9 +432,10 @@ def chat_completions():
         return add_cors_headers(jsonify(error)), code
 
     messages = req_body.get("messages", [])
-    validation_error = _validate_messages(messages)
-    if validation_error:
-        error, code = _openai_error(validation_error, "invalid_request_error", 400)
+    try:
+        chat_req = ChatRequest(**req_body)
+    except ValidationError as e:
+        error, code = _openai_error(str(e), "invalid_request_error", 400)
         return add_cors_headers(jsonify(error)), code
 
     original_model = req_body.get("model", config["CUSTOM_MODEL_ID"])
