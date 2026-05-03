@@ -159,5 +159,3 @@ curl http://localhost:8080/v1/models
 ## License
 
 Apache License 2.0 - see LICENSE file.
-EOF
-echo "README.md updated successfully"
