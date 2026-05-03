@@ -1,68 +1,83 @@
 # NVIDIA AI Gateway
 
-Production-ready OpenAI-compatible proxy for NVIDIA AI with streaming, tool calls, CORS, and SQLite logging.
+Production-ready OpenAI-compatible proxy for NVIDIA AI with streaming, tool calls, CORS, connection pooling, and resilient background architecture.
 
 ## Features
 
-- Full OpenAI API compatibility
-- Streaming (SSE) support
-- Tool calling with parallel execution
-- CORS enabled
-- SQLite request/response logging
-- Token tracking
-- Cross-platform: Linux, macOS, Windows
-- Standalone binaries available
+- **Full OpenAI API Compatibility:** Drop-in replacement for OpenAI endpoints.
+- **Streaming (SSE) Support:** Reliable real-time chunk streaming.
+- **Tool Calling:** Full parallel tool call extraction and bridging.
+- **Resilience:** Connection pooling, upstream retries (with jittered backoff), and background log retention.
+- **Observability:** Structured JSON logging, SQLite request/response auditing, token tracking, and `/healthz` / `/readyz` probes.
+- **Security:** In-flight masking of sensitive API keys within logs and explicit model allow-listing.
+- **Cross-platform & Standalone:** Available as zero-dependency Linux and Windows executables, Docker containers, and a pip-installable package.
 
 ## Quick Start
 
-### Binary (No Python needed)
+### 1. Docker (Recommended)
+
+Run the latest image directly from the GitHub Container Registry:
+
+```bash
+docker run -d \
+  -p 8080:8089 \
+  -e CUSTOM_API_KEY="nvapi-..." \
+  -v $(pwd)/data:/app/data \
+  ghcr.io/unn-known1/nvidia-ai-gateway:latest
+```
+
+### 2. Standalone Binary (No Python needed)
 
 Download from [Releases](https://github.com/unn-Known1/NVIDIA-AI-Gateway/releases):
 
 ```bash
-chmod +x nvidia-ai-gateway
+chmod +x nvidia-ai-gateway-linux-amd64
 export CUSTOM_API_KEY="nvapi-..."
-./nvidia-ai-gateway --port 8080
+./nvidia-ai-gateway-linux-amd64 --port 8080
 ```
 
-### Python (Package Installation)
+### 3. Python (Virtual Environment)
 
 ```bash
 git clone https://github.com/unn-Known1/NVIDIA-AI-Gateway.git
 cd NVIDIA-AI-Gateway
-./scripts/install.sh
+python -m venv venv
 source venv/bin/activate
-python -m gateway --port 8080
-```
-
-### Python (Manual)
-
-```bash
 pip install -r requirements.txt
 python -m gateway --port 8080
 ```
 
 ## Configuration
 
-Set environment variables:
+You can configure the gateway using environment variables, an `.env` file in the working directory, or by passing a config file (`--config config.ini`). 
 
-- `CUSTOM_API_KEY` (required): Your NVIDIA API key
-- `CUSTOM_BASE_URL`: NVIDIA API base URL (default: https://integrate.api.nvidia.com/v1)
-- `CUSTOM_MODEL_ID`: Default model (default: stepfun-ai/step-3.5-flash)
-- `GATEWAY_PORT`: Port to listen on (default: 8089)
+### Core Settings
+- `CUSTOM_API_KEY` (required): Your NVIDIA API key (`nvapi-...`).
+- `CUSTOM_BASE_URL`: NVIDIA API base URL (default: `https://integrate.api.nvidia.com/v1`).
+- `CUSTOM_MODEL_ID`: Default model if none is specified (default: `stepfun-ai/step-3.5-flash`).
+- `ALLOWED_MODELS`: Comma-separated list of models the client is allowed to request, or `*` to allow any (default: `*`).
+- `GATEWAY_PORT`: Port to listen on (default: `8089`).
+
+### Advanced & Reliability Settings
+- `UPSTREAM_RETRIES`: Number of times to retry idempotent upstream requests on 5xx/429 errors (default: `3`).
+- `LOG_RETENTION_DAYS`: Background worker cleans up SQLite logs older than this (default: `30`).
+- `LOG_REQUEST_BODIES`: Log full request/response bodies to DB (`true`/`false`). Secrets are automatically redacted.
 
 ## API Endpoints
 
-All OpenAI-compatible:
+All endpoints are fully OpenAI-compatible:
 
 - `POST /v1/chat/completions` (streaming & non-streaming)
 - `POST /v1/completions`
 - `POST /v1/embeddings`
 - `GET /v1/models`
+
+### Gateway specific endpoints:
+- `GET /healthz` (liveness probe)
+- `GET /readyz` (readiness probe - validates DB & upstream API)
 - `GET /gateway/status`
 - `GET /gateway/stats`
 - `GET /gateway/logs`
-- `OPTIONS *` (CORS preflight)
 
 ## Usage Example
 
@@ -71,7 +86,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:8080/v1",
-    api_key="sk-gateway-..."  # From gateway startup banner
+    api_key="sk-gateway-..."  # Grab this from the gateway startup banner!
 )
 
 response = client.chat.completions.create(
@@ -85,43 +100,14 @@ for chunk in response:
         print(chunk.choices[0].delta.content, end="")
 ```
 
-## Troubleshooting
+## Development & Architecture
 
-### Virtual Environment Creation Fails with ensurepip Error
-
-**Problem:** In some environments (containers, restricted systems), `python3 -m venv` fails with:
-```
-Error: Command '['.../venv/bin/python3', '-m', 'ensurepip', '--upgrade', '--default-pip']' returned non-zero exit status 1.
-```
-
-**Solution:** This is fixed in the current version. The `install.sh` script now:
-1. Creates venv without pip using `--without-pip` flag
-2. Manually installs pip via get-pip.py
-3. Detects incomplete venvs and repairs them automatically
-
-If you encounter this error, simply re-run:
-```bash
-./scripts/install.sh
-```
-
-### Module 'gateway' Not Found After Installation
-
-If you see `ModuleNotFoundError: No module named 'gateway'`:
-```bash
-# Reinstall the package in editable mode
-source venv/bin/activate
-pip install -e .
-```
-
-### Port Already in Use
-
-If the port is already occupied, use a different port:
-```bash
-export GATEWAY_PORT=8081
-python -m gateway
-```
-
-## Development
+### Architecture Overview
+The NVIDIA AI Gateway is designed to be lightweight yet highly concurrent:
+- **Web Server:** Uses Flask served via a background `werkzeug` WSGI server, capable of handling SSE streams cleanly.
+- **Database:** Uses SQLite with `WAL` (Write-Ahead Logging) mode and thread-local connections to allow concurrent non-blocking reads/writes.
+- **Connection Pooling:** A global `requests.Session` pool is maintained for upstream requests, eliminating TLS handshake overhead on every API call.
+- **Background Workers:** A dedicated daemon thread (`log_retention_worker`) routinely vacuums the database to prevent unbounded disk usage.
 
 ### Project Structure
 ```
@@ -130,21 +116,9 @@ nvidia-ai-gateway/
 │   ├── __init__.py
 │   └── __main__.py       # Application entry point
 ├── scripts/              # Platform-specific installers and launchers
-├── .github/workflows/    # CI/CD pipelines
+├── .github/workflows/    # CI/CD pipelines (Automated release builds)
 ├── pyproject.toml        # Package configuration
-├── requirements.txt      # Dependencies
-├── nvidia-ai-gateway.py  # Single-file portable version
-└── README.md
-```
-
-### Building Standalone Executables
-
-```bash
-# Linux/macOS
-./scripts/build.sh
-
-# Windows
-scripts\build.bat
+└── requirements.txt      # Pinned dependencies
 ```
 
 ### Running Tests
@@ -153,9 +127,23 @@ scripts\build.bat
 # Basic connectivity test
 export CUSTOM_API_KEY="nvapi-..."
 python -m gateway &
-curl http://localhost:8080/v1/models
+curl http://localhost:8080/healthz
+curl http://localhost:8080/readyz
+```
+
+## Troubleshooting
+
+### Virtual Environment Creation Fails with ensurepip Error
+**Problem:** `python3 -m venv` fails with an `ensurepip` error.
+**Solution:** Re-run `./scripts/install.sh`. It automatically detects broken environments, uses the `--without-pip` flag, and bootstraps pip manually.
+
+### Port Already in Use
+If port 8089 (or your configured port) is occupied:
+```bash
+export GATEWAY_PORT=8081
+python -m gateway
 ```
 
 ## License
 
-Apache License 2.0 - see LICENSE file.
+Apache License 2.0 - see [LICENSE](LICENSE) file.
