@@ -23,6 +23,7 @@ import socket
 import sqlite3
 import threading
 import subprocess
+import signal
 from datetime import datetime
 from contextlib import contextmanager
 from typing import Optional, Tuple, List, Dict, Any
@@ -948,8 +949,13 @@ class BackgroundServer:
     def start(self):
         self._thread.start()
 
-    def stop(self):
-        self.server.shutdown()
+
+def handle_shutdown(signum, frame):
+    print("Shutdown signal received... ")
+    server.stop()
+    sys.exit(0)
+
+        
 
 def _local_ip() -> str:
     try:
@@ -1058,6 +1064,8 @@ def main():
 
     server = BackgroundServer(app, config["GATEWAY_PORT"])
     server.start()
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    signal.signal(signal.SIGINT, handle_shutdown)
     logger.info("Gateway running on port %d — press Ctrl+C to stop", config["GATEWAY_PORT"])
 
     try:
