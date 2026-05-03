@@ -298,21 +298,28 @@ def add_cors_headers(response: Response) -> Response:
     _origin = request.headers.get('Origin', '')
     _is_localhost = _origin.startswith('http://localhost') or _origin.startswith('http://127.0.0.1')
 
-    # In production, only allow configured origins
-    if _is_production and _origins_list:
-        if _origin in _origins_list:
+    # In production, only allow configured origins and validate against allowlist
+    if _is_production:
+        if _origins_list and _origin in _origins_list:
+            # Only set specific origin in production for security
             response.headers.add('Access-Control-Allow-Origin', _origin)
-        else:
-            response.headers.add('Access-Control-Allow-Origin', _origins_list[0])
+            response.headers.add('Vary', 'Origin')
+        # Don't add headers if origin is not in allowlist - secure by default
     elif _is_localhost or not _is_production:
         # Allow localhost in development
         if _origin:
             response.headers.add('Access-Control-Allow-Origin', _origin)
+            response.headers.add('Vary', 'Origin')
 
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Session-ID')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    response.headers.add('Access-Control-Max-Age', '86400')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Only expose these headers when CORS is actually allowed
+    if response.headers.get('Access-Control-Allow-Origin'):
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Session-ID')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        response.headers.add('Access-Control-Max-Age', '86400')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        # Security headers
+        response.headers.add('X-Content-Type-Options', 'nosniff')
+        response.headers.add('X-XSS-Protection', '1; mode=block')
     return response
 
 def _log_error(entry: dict, start_ts: float, status: int, msg: str):
@@ -333,25 +340,31 @@ def _log_error(entry: dict, start_ts: float, status: int, msg: str):
 app = Flask(__name__)
 
 # Configure CORS based on environment
+# SECURITY: Default to restrictive CORS in production
 _cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
 _is_production = os.getenv("NODE_ENV") == "production"
 
 # SECURE: Default to restrictive CORS in production
 # Only allow wildcard (*) if explicitly configured in non-production
 if _cors_origins:
+    # Use explicitly configured origins
     _allowed = [o.strip() for o in _cors_origins.split(",") if o.strip()]
-    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True, "allow_headers": "*"}})
+    CORS(app, resources={r"/*": {"origins": _allowed, "supports_credentials": True}})
     logger.info("CORS enabled for configured origins: %s", _allowed)
+elif _is_production:
+    # PRODUCTION: Block all cross-origin requests by default
+    logger.warning("CORS set to deny all origins in production mode for security!")
+    CORS(app, resources={r"/*": {"origins": []}})
 else:
-    if _is_production:
-        # SECURITY: In production, require explicit CORS_ALLOWED_ORIGINS
-        logger.error("CORS_ALLOWED_ORIGINS not set in production! Defaulting to no CORS.")
-        CORS(app, resources={r"/*": {"origins": "", "supports_credentials": False}})
-        logger.warning("SECURITY WARNING: CORS is disabled. Set CORS_ALLOWED_ORIGINS for production.")
-    else:
-        # Development mode - allow localhost only
-        logger.warning("CORS set to allow all origins in development mode - not recommended for production!")
-        CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    # DEVELOPMENT: Allow localhost and local development only
+    _dev_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
+    logger.info("CORS enabled for development origins: %s", _dev_origins)
+    CORS(app, resources={r"/*": {"origins": _dev_origins}})
 
 @app.after_request
 def after_request(response: Response) -> Response:
