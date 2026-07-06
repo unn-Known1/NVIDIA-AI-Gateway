@@ -508,6 +508,7 @@ def chat_completions():
     if is_stream:
         # BUG-019: Ensure upstream returns usage in final chunk
         req_body.setdefault("stream_options", {}).setdefault("include_usage", True)
+        MAX_STREAMING_CHUNKS = int(os.getenv("MAX_STREAMING_CHUNKS", "5000"))
         collected_chunks = []
 
         try:
@@ -711,6 +712,7 @@ def completions():
     if is_stream:
         # BUG-019: Ensure upstream returns usage in final chunk
         req_body.setdefault("stream_options", {}).setdefault("include_usage", True)
+        MAX_STREAMING_CHUNKS = int(os.getenv("MAX_STREAMING_CHUNKS", "5000"))
         collected_chunks = []
 
         try:
