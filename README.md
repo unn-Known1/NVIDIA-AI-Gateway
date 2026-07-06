@@ -8,7 +8,7 @@ Production-ready OpenAI-compatible proxy for NVIDIA AI with streaming, tool call
 - **Streaming (SSE) Support:** Reliable real-time chunk streaming.
 - **Tool Calling:** Full parallel tool call extraction and bridging.
 - **Resilience:** Connection pooling, upstream retries (with jittered backoff), and background log retention.
-- **Observability:** Structured JSON logging, SQLite request/response auditing, token tracking, and `/healthz` / `/readyz` probes.
+- **Observability:** Structured JSON logging, SQLite request/response auditing, token tracking from upstream `usage` responses when available, and `/healthz` / `/readyz` probes.
 - **Security:** In-flight masking of sensitive API keys within logs and explicit model allow-listing.
 - **Cross-platform & Standalone:** Available as zero-dependency Linux and Windows executables, Docker containers, and a pip-installable package.
 
