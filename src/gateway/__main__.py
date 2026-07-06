@@ -318,6 +318,9 @@ def _retry_get(url, **kwargs):
                 continue
             raise e
 
+
+MAX_STREAMING_CHUNKS = 2000
+
 def accumulate_tool_calls(chunks: List[Dict]) -> List[Dict]:
     """
     Accumulate parallel tool calls from streaming chunks.
@@ -554,6 +557,8 @@ def chat_completions():
                         try:
                             chunk = json.loads(data_str)
                             collected_chunks.append(chunk)
+                            if MAX_STREAMING_CHUNKS and len(collected_chunks) > MAX_STREAMING_CHUNKS:
+                                collected_chunks = collected_chunks[-MAX_STREAMING_CHUNKS:]
                         except json.JSONDecodeError:
                             pass
             finally:
@@ -749,6 +754,8 @@ def completions():
                         try:
                             chunk = json.loads(data_str)
                             collected_chunks.append(chunk)
+                            if MAX_STREAMING_CHUNKS and len(collected_chunks) > MAX_STREAMING_CHUNKS:
+                                collected_chunks = collected_chunks[-MAX_STREAMING_CHUNKS:]
                         except json.JSONDecodeError:
                             pass
             finally:
